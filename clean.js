@@ -47,10 +47,11 @@ class WebpackCleanUndependentFilesPlugin {
       await this.gatherDependencies(compilation);
       await this.gatherEntryFiles();
       await this.gatherFiles2Delete();
-      console.log(this.files2Delete);
       if (this.options.autoDelete) {
         await this.cleanFiles();
-        await this.cleanEmptyDirectory();
+        for (const entry of this.options.entry) {
+          await this.cleanEmptyDirectory(entry);
+        }
       }
     });
   }
@@ -87,6 +88,7 @@ class WebpackCleanUndependentFilesPlugin {
     this.allEntryFiles.push(...allEntryFilesList.flat());
   }
 
+  // 过滤出需要被删除的文件
   async gatherFiles2Delete() {
     this.files2Delete = this.allEntryFiles.filter((file) => {
       return (
@@ -105,10 +107,36 @@ class WebpackCleanUndependentFilesPlugin {
   }
 
   // 清除文件
-  async cleanFiles() {}
+  async cleanFiles() {
+    this.files2Delete.forEach((file) => {
+      fs.unlinkSync(file);
+      console.log(`成功删除文件：${file}`);
+    });
+  }
 
   // 文件清理后调用，清除空文件夹
-  async cleanEmptyDirectory() {}
+  async cleanEmptyDirectory(filePath) {
+    let files;
+    try {
+      files = fs.readdirSync(filePath);
+    } catch (error) {
+      return;
+    }
+    if (files.length === 0) {
+      fs.rmdirSync(filePath);
+      console.log(`成功删除空文件夹：${filePath}`);
+    } else {
+      files.forEach((file) => {
+        const nextFilePath = `${filePath}/${file}`;
+        this.cleanEmptyDirectory(nextFilePath);
+      });
+      //删除母文件夹下的所有字空文件夹后，将母文件夹也删除
+      if (fs.readdirSync(filePath).length === 0) {
+        fs.rmdirSync(filePath);
+        console.log(`成功删除空文件夹： ${filePath}`);
+      }
+    }
+  }
 }
 
 module.exports = { WebpackCleanUndependentFilesPlugin };

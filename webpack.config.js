@@ -128,5 +128,7 @@ class FileShaking {
 module.exports = {
   mode: "development",
 //   plugins: [new FileShaking()],
-  plugins: [new WebpackCleanUndependentFilesPlugin()],
+  plugins: [new WebpackCleanUndependentFilesPlugin({
+      autoDelete: true
+  })],
 };

@@ -70,7 +70,7 @@ class WebpackCleanUndependentFilesPlugin {
     }
 
     const debug = (message) => {
-      if(this.options.debug) {
+      if (this.options.debug) {
         console.log(`${PLUGIN_NAME} DEBUG: ${yellow(message)}`)
       }
     }
@@ -98,9 +98,10 @@ class WebpackCleanUndependentFilesPlugin {
   // plugin 入口
   apply(compiler) {
     /**
-     * fix: webpack3 has second params cb
-     * cb should be called after hooks finished
-     * and the process can be continued
+     * fix: webpack3 async hook has second param cb, and the process can be continued after calling the cb
+     * webpack3: https://webpack-3.cdn.bcebos.com/api/compiler/#event-hooks
+     * webpack4: https://v4.webpack.docschina.org/api/compiler-hooks/#afteremit
+     * webpack5: https://webpack.docschina.org/api/compiler-hooks/#afteremit
      */
     const afterEmit = async (compilation, cb) => {
       // webpack 生命周期钩子收集项目目录下自己写的依赖
@@ -115,25 +116,27 @@ class WebpackCleanUndependentFilesPlugin {
       }
       // 自动删除未被依赖的文件
       if (this.options.autoDelete && !this.options.callback) {
-        if(this.files2Delete.length > 0) {
+        if (this.files2Delete.length > 0) {
           this.logger.debug('删除未被依赖的文件...')
-        await this.cleanFiles()
-        for (const entry of this.options.entry) {
-          await this.cleanEmptyDirectory(entry)
-        }
-        }else {
+          await this.cleanFiles()
+          for (const entry of this.options.entry) {
+            await this.cleanEmptyDirectory(entry)
+          }
+        } else {
           this.logger.debug('没有需要被删除的文件...')
         }
       }
-      cb()
+      cb?.()
     }
 
     if (compiler.hooks) {
-        compiler.hooks.afterEmit.tap('cleanFiles', afterEmit)
+      // webpack >= 4
+      compiler.hooks.afterEmit.tap('cleanFiles', afterEmit)
     } else {
-        compiler.plugin('after-emit', afterEmit)
+      // webpack = 3
+      compiler.plugin('after-emit', afterEmit)
     }
-    
+
   }
 
   // 收集 webpack 监测到的依赖
@@ -169,8 +172,12 @@ class WebpackCleanUndependentFilesPlugin {
         })
       )
     })
-    const allEntryFilesList = await Promise.all(promiseList)
-    this.allEntryFiles.push(...allEntryFilesList.filter(fileList => Array.isArray(fileList)).flat())
+    try {
+      const allEntryFilesList = await Promise.all(promiseList)
+      this.allEntryFiles.push(...allEntryFilesList.flat())
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   // 过滤出需要被删除的文件
@@ -208,7 +215,7 @@ class WebpackCleanUndependentFilesPlugin {
     }
     if (files.length === 0) {
       fs.rmdirSync(filePath)
-      this.logger.info(`成功删除空文件夹：${filePath}`)
+      this.logger.info(`成功删除空文件夹：${path.resolve(filePath)}`)
     } else {
       files.forEach(file => {
         const nextFilePath = `${filePath}/${file}`
@@ -216,7 +223,7 @@ class WebpackCleanUndependentFilesPlugin {
       })
       if (fs.readdirSync(filePath).length === 0) {
         fs.rmdirSync(filePath)
-        this.logger.info(`成功删除空文件夹：${filePath}`)
+        this.logger.info(`成功删除空文件夹：${path.resolve(filePath)}`)
       }
     }
   }

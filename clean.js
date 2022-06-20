@@ -2,6 +2,7 @@ const fs = require('fs')
 const glob = require('glob')
 const path = require('path')
 const { createColors } = require("colorette")
+const rootPackageJson = require('./package.json')
 
 class WebpackCleanUndependentFilesPlugin {
   constructor(options) {
@@ -10,7 +11,7 @@ class WebpackCleanUndependentFilesPlugin {
        * 清理文件入口
        * 适配多入口打包的情况，可以同时清理多个入口的非依赖文件
        */
-      entry: ['./src'], //
+      entry: ['./src'],
       /**
        * 是否自动清除未被依赖的文件
        */
@@ -58,8 +59,12 @@ class WebpackCleanUndependentFilesPlugin {
    * 创建 logger 管理器
    */
   createLogger() {
-    const PLUGIN_NAME = '[clean-independent-files-plugin]'
+    const PLUGIN_NAME = `[${rootPackageJson.name}]`
     const { green, red, yellow } = createColors({ useColor: this.options.useColor })
+
+    const normal = (message) => {
+      console.log(`${PLUGIN_NAME} INFO: ${message}`)
+    }
 
     const info = (message) => {
       console.log(`${PLUGIN_NAME} INFO: ${green(message)}`)
@@ -75,7 +80,10 @@ class WebpackCleanUndependentFilesPlugin {
       }
     }
 
-    return { info, error, debug }
+    normal(`Version: ${rootPackageJson.version}`)
+    normal(`${rootPackageJson.description}`)
+
+    return { normal, info, error, debug }
   }
 
   // 标准化与校验注入参数
@@ -229,4 +237,8 @@ class WebpackCleanUndependentFilesPlugin {
   }
 }
 
-module.exports = { WebpackCleanUndependentFilesPlugin }
+const defaultConfig = {
+  exclude: [/[t|T]yping/, /.+\.d\.ts/, /[u|U]til/, /[p|P]ublic/]
+}
+
+module.exports = { WebpackCleanUndependentFilesPlugin, defaultConfig }

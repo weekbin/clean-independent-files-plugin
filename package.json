@@ -10,10 +10,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "colorette": "^2.0.16",
-    "commander": "^9.3.0",
-    "glob": "^8.0.3",
     "webpack": "^5.72.1",
     "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "colorette": "^2.0.16",
+    "commander": "^9.3.0",
+    "glob": "^8.0.3"
   }
 }

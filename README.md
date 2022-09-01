@@ -153,3 +153,21 @@ module.exports = {
   ]
 };
 ```
+
+You can also use defaultConfig from package
+```js
+const defaultConfig = {
+  entry: ['./src'],
+  exclude: [/[t|T]yping/, /.+\.d\.ts/, /[u|U]til/, /[p|P]ublic/]
+}
+```
+
+```js
+const { defaultConfig } = require("@weekbin/clean-independent-files-plugin");
+
+module.exports = {
+  plugins: [
+    new WebpackCleanUndependentFilesPlugin(defaultConfig)
+  ]
+};
+```

@@ -92,7 +92,7 @@ class WebpackCleanUndependentFilesPlugin {
     if (options.entry) {
       options.entry = [...new Set(options.entry)]
     }
-    options.autoDelete = !!options.autoDelete
+    options.autoDelete = typeof options.autoDelete !== 'undefined' ? !!options.autoDelete : this.options.autoDelete
     options.debug = !!options.debug
     options.outputLogs = typeof options.outputLogs === 'boolean' ? options.outputLogs : true
     if (options.exclude) {
@@ -238,6 +238,7 @@ class WebpackCleanUndependentFilesPlugin {
 }
 
 const defaultConfig = {
+  entry: ['./src'],
   exclude: [/[t|T]yping/, /.+\.d\.ts/, /[u|U]til/, /[p|P]ublic/]
 }
 
